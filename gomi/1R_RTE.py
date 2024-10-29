@@ -9,7 +9,7 @@ start_time = time.time()
 
 ##### parameter #####
 ### R2D2 data ###
-d = R2D2.R2D2_data('/mnt/solar07a/c0287shimizu/R2D2/run/d001/data/')
+d = R2D2.R2D2_data('/mnt/solar07a/c0287shimizu/R2D2/run/d002/data/')
 d.read_qq(10,'ro')   
 d.read_qq(10,'op')   
 d.read_qq(10, 'te')  
