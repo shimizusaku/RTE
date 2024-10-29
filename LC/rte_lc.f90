@@ -98,10 +98,12 @@ subroutine rte_longcharacteristic(ro, te, op)
 
     do m = 1, 1
     do idir = 2, 2
-    do jdir = 1, 1
-    do kdir = 1, 1
+    do jdir = 2, 2
+    do kdir = 2, 2
         
         print *, "m, idir, jdir, kdir: ", m, idir, jdir, kdir
+
+        ip = 1
 
         do ip = ipsta(idir), ipend(idir), pstep(idir)
         do jp = jpsta(jdir), jpend(jdir), pstep(jdir)

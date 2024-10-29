@@ -74,12 +74,12 @@ contains
     pstep = [-1, 1]
     pshift = [-1, 0]
     pshift_s = [0, -1]
-    ipsta = [lx, 2]
-    ipend = [2, lx]
-    jpsta = [ly, 2]
-    jpend = [2, ly]
-    kpsta = [lz, 2]
-    kpend = [2, lz]
+    ipsta = [lx-1, 1]
+    ipend = [1, lx-1]
+    jpsta = [ly-1, 1]
+    jpend = [1, ly-1]
+    kpsta = [lz-1, 1]
+    kpend = [1, lz-1]
 
     ! short characteristics
     mux = [sqrt(7.d0 / 9.d0), 1.d0 / 3.d0,       1.d0 / 3.d0       ]
