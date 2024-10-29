@@ -113,9 +113,9 @@ subroutine rte_longcharacteristic(ro, te, op)
             ksta(ip, jp, kp, m, idir, jdir, kdir) = real(kp) - (step(m, 3, kdir) * real(abs(kp - kpsta(kdir))))
 
             ! downstream boundary point
-            iend(ip, jp, kp, m, idir, jdir, kdir) = real(ip) + (step(m, 1, idir) * real(abs(ip - ipend(idir))))
-            jend(ip, jp, kp, m, idir, jdir, kdir) = real(jp) + (step(m, 2, jdir) * real(abs(jp - jpend(jdir))))
-            kend(ip, jp, kp, m, idir, jdir, kdir) = real(kp) + (step(m, 3, kdir) * real(abs(kp - kpend(kdir))))
+            ! iend(ip, jp, kp, m, idir, jdir, kdir) = real(ip) + (step(m, 1, idir) * real(abs(ip - ipend(idir))))
+            ! jend(ip, jp, kp, m, idir, jdir, kdir) = real(jp) + (step(m, 2, jdir) * real(abs(jp - jpend(jdir))))
+            ! kend(ip, jp, kp, m, idir, jdir, kdir) = real(kp) + (step(m, 3, kdir) * real(abs(kp - kpend(kdir))))
 
             ! number of cell
             ncell(:) = [lx, ly, lz]
