@@ -46,7 +46,7 @@ module test_lc_def
     real(8), dimension(mrad) :: dxc, dyc, dzc
     real(8), dimension(mrad) :: dxd, dyd, dzd
     integer, dimension(mrad, 2, 4) :: di, dj, dk
-    real(8), dimension(mrad) :: dc1, dd1, dc2, dd2
+    real(8) :: duc1, dud1, duc2, dud2
     integer, dimension(mrad) :: di1, di2
   
   
@@ -90,15 +90,7 @@ module test_lc_def
         enddo
         enddo
         enddo
-  
-        shift(m, 1, :)   = [step(m, 1, 1), 0.d0]
-        shift(m, 2, :)   = [step(m, 2, 1), 0.d0]
-        shift(m, 3, :)   = [step(m, 3, 1), 0.d0]
-  
-        shift_s(m, 1, :) = [0.d0, step(m, 1, 1)]
-        shift_s(m, 2, :) = [0.d0, step(m, 2, 1)]
-        shift_s(m, 3, :) = [0.d0, step(m, 3, 1)]
-  
+
       enddo
   
       ! value to determine the index
@@ -106,32 +98,17 @@ module test_lc_def
         
         ! y-z plane
         if (dxx / mux(m) <= dyy / muy(m) .and. dxx / mux(m) <= dzz / muz(m)) then
-          dc1(m) = dyc(m)
-          dd1(m) = dyd(m)
-          dc2(m) = dzc(m)
-          dd2(m) = dzd(m)
+
           di1(m) = 1.0d0 / dyy
           di2(m) = 1.0d0 / dzz
-          di(m, 1, :) = 0
-          di(m, 2, :) = -1
-          dj(m, 1, :) = [0, -1, 0, -1]
-          dk(m, 1, :) = [0, 0, -1, -1]
-          dj(m, 2, :) = [-1, 0, -1, 0]
-          dk(m, 2, :) = [-1, -1, 0, 0]    
+          di(m, 2, :) = 0
+          dj(m, 2, :) = [0, 1, 0, 1]
+          dk(m, 2, :) = [0, 0, 1, 1]    
   
         endif        
       enddo
   
     end subroutine ray_def
-  
-    subroutine judge_qrad()
-  
-      jf_judge = [1, 0]
-      log_tumin = log(tumin)
-      log_tumax = log(tumax)
-      delta_log_tu = (log_tumax - log_tumin) / dble(nx_jf_judge - 1)
-      jk_coef = delta_log_tu / (log_tumin - log_tumax)
-  
-    end subroutine judge_qrad
+
   
   end module test_lc_def

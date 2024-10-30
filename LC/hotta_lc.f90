@@ -93,8 +93,8 @@ subroutine rte_longcharacteristic(ro, te, op)
     
         do m = 1, 1
         do idir = 2, 2
-        do jdir = 1, 1
-        do kdir = 1, 1
+        do jdir = 2, 2
+        do kdir = 2, 2
             
         print *, "m, idir, jdir, kdir: ", m, idir, jdir, kdir
 
@@ -105,23 +105,60 @@ subroutine rte_longcharacteristic(ro, te, op)
 
             do i = 1, ncell(m)
 
-                ! upstream
+                !!! upstream
                 iu(i) = ip + (i-1) * step(m, 1, idir)
                 ju(i) = jp + (i-1) * step(m, 2, jdir)
                 ku(i) = kp + (i-1) * step(m, 3, kdir)
-                
+
+                if((iu(i) - real(ipend(idir))) > 0 ) then
+                    iu(i) = ipsta(idir) + (iu(i) - real(ipend(idir)))            
+                endif
+
+                if((ju(i) - real(jpend(jdir))) > 0 ) then
+                    ju(i) = jpsta(jdir) + (ju(i) - real(jpend(jdir)))            
+                endif
+
+                if((ku(i) - real(kpend(kdir))) > 0 ) then
+                    ku(i) = kpsta(kdir) + (ku(i) - real(kpend(kdir)))            
+                endif
+
+
+                ! alpha and beta
+                duc1 = ju(i) - int(ju(i))
+                dud1 = dyy - duc1
+                duc2 = ku(i) - int(ku(i))
+                dud2 = dzz - duc2
 
                 log_alpha_up = &
-                    & ((log(alpha(int(iu(i))+di(m, idir, 1), int(ju(i))+dj(m, jdir, 1), int(ku(i))+dk(m, kdir, 1))) * dc1(m) * dc2(m) &
-                    & + log(alpha(int(iu(i))+di(m, idir, 2), int(ju(i))+dj(m, jdir, 2), int(ku(i))+dk(m, kdir, 2))) * dd1(m) * dc2(m) &
-                    & + log(alpha(int(iu(i))+di(m, idir, 3), int(ju(i))+dj(m, jdir, 3), int(ku(i))+dk(m, kdir, 3))) * dc1(m) * dd2(m) &
-                    & + log(alpha(int(iu(i))+di(m, idir, 4), int(ju(i))+dj(m, jdir, 4), int(ku(i))+dk(m, kdir, 4))) * dd1(m) * dd2(m) &
-                    &  ) * di1(m) * di2(m))
+                    & ((log(alpha(int(iu(i))+di(m, idir, 1), int(ju(i))+dj(m, jdir, 1), int(ku(i))+dk(m, kdir, 1))) * dud1 * dud2 &
+                    & + log(alpha(int(iu(i))+di(m, idir, 2), int(ju(i))+dj(m, jdir, 2), int(ku(i))+dk(m, kdir, 2))) * duc1 * dud2 &
+                    & + log(alpha(int(iu(i))+di(m, idir, 3), int(ju(i))+dj(m, jdir, 3), int(ku(i))+dk(m, kdir, 3))) * dud1 * duc2 &
+                    & + log(alpha(int(iu(i))+di(m, idir, 4), int(ju(i))+dj(m, jdir, 4), int(ku(i))+dk(m, kdir, 4))) * duc1 * duc2 &
+                &  ) * di1(m) * di2(m))
+                alpha_up = exp(log_alpha_up)
 
-                ! downstream
+
+
+                !!! downstream
                 id(i) = iu(i) + step(m, 1, idir)
                 jd(i) = ju(i) + step(m, 2, jdir)
                 kd(i) = ku(i) + step(m, 3, kdir)
+
+                if((id(i) - real(ipend(idir))) > 0 ) then
+                    id(i) = ipsta(idir) + (id(i) - real(ipend(idir)))
+                endif
+
+                if((jd(i) - real(jpend(jdir))) > 0 ) then
+                    jd(i) = jpsta(jdir) + (jd(i) - real(jpend(jdir)))                
+                endif
+
+                if((kd(i) - real(kpend(kdir))) > 0 ) then
+                    kd(i) = kpsta(kdir) + (kd(i) - real(kpend(kdir)))                
+                endif
+
+                
+
+
 
 
             enddo
