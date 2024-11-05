@@ -1,4 +1,4 @@
-subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
+subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
 !!!----- def & init ----- !!!
     ! rte multiray def
     use test_lc_def
@@ -11,8 +11,9 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
     real(8), dimension(nx), intent(in) :: x, y, z
 
     ! output data
-    real(8), dimension(lx, ly, lz, lz), intent(out) :: tu_1ray
-
+    real(8), dimension(1, ly, lz, lz), intent(out) :: in
+    ! real(8), dimension(nx, ly, lz), intent(out) :: tu_1ray
+    ! integer, dimension(ly, lz), intent(out) :: x_tu1
 
     ! ray 
     real(8), dimension(ly-1) :: iu, ju, ku
@@ -24,6 +25,9 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
     real(8), allocatable :: alpha_(:, :, :), beta_(:, :, :)
     real(8), allocatable :: alpha(:, :, :), beta(:, :, :)
 
+    ! optical depth
+    ! real(8), allocatable :: delta_tu_1ray(:, :, :)
+
     ! delta optical depth & delta intensity
     real(8) :: alpha_up, log_alpha_up
     real(8) :: beta_up, log_beta_up
@@ -31,8 +35,11 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
     real(8) :: beta_down, log_beta_down
     real(8) :: lray
     real(8), allocatable :: delta_tu(:, :, :, :), exp_delta_tu(:, :, :, :)
+    real(8), allocatable :: delta_in(:, :, :, :)
 
-    ! optical depth 1ray
+    ! intensity
+    real(8) :: in_up
+
 
 
     ! memory
@@ -42,9 +49,9 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
     allocate(beta_(nx, ny+2, nz+2))
     allocate(alpha(lx, ly, lz))
     allocate(beta(lx, ly, lz))
-    allocate(delta_tu(lx, ly, lz, lz))
-    ! allocate(delta_in(mrad, 2, 2, 2, lx, ly, lz))
-    allocate(exp_delta_tu(lx, ly, lz, lz))
+    allocate(delta_tu(1, ly, lz, lz))
+    allocate(delta_in(1, ly, lz, lz))
+    allocate(exp_delta_tu(1, ly, lz, lz))
 
 
 !-------------------------------------------------------------------------------------------------------!
@@ -75,32 +82,65 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
     do j = 1, ly
     do k = 1, lz
         alpha(i, j, k) = exp((log(alpha_(i,   j,   k)) + log(alpha_(i,   j,   k+1)) &
-                            & + log(alpha_(i,   j+1, k)) + log(alpha_(i,   j+1, k+1)) &
-                            & + log(alpha_(i+1, j,   k)) + log(alpha_(i+1, j,   k+1)) &
-                            & + log(alpha_(i+1, j+1, k)) + log(alpha_(i+1, j+1, k+1))) &
-                            & / 8)
+                          & + log(alpha_(i,   j+1, k)) + log(alpha_(i,   j+1, k+1)) &
+                          & + log(alpha_(i+1, j,   k)) + log(alpha_(i+1, j,   k+1)) &
+                          & + log(alpha_(i+1, j+1, k)) + log(alpha_(i+1, j+1, k+1))) &
+                          & / 8)
 
         beta(i, j, k) = exp((log(beta_(i,   j,   k)) + log(beta_(i,   j,   k+1)) &
-                            & + log(beta_(i,   j+1, k)) + log(beta_(i,   j+1, k+1)) &
-                            & + log(beta_(i+1, j,   k)) + log(beta_(i+1, j,   k+1)) &
-                            & + log(beta_(i+1, j+1, k)) + log(beta_(i+1, j+1, k+1))) &
-                            & / 8)   
+                         & + log(beta_(i,   j+1, k)) + log(beta_(i,   j+1, k+1)) &
+                         & + log(beta_(i+1, j,   k)) + log(beta_(i+1, j,   k+1)) &
+                         & + log(beta_(i+1, j+1, k)) + log(beta_(i+1, j+1, k+1))) &
+                         & / 8)   
     enddo
     enddo
     enddo
 
 
 
-!!!----- delta opatical depth & delta intensity -----!!!
-    print *, "# delta opacity & delta in #"
+!!!----- optical depth 1ray -----!!!
+    print *, "# optical depth 1ray #"
 
-    ! ray direction
-    call ray_def()
+    ! ! optical depth 1ray
+    ! tu_1ray(lx+1, :, :) = 0.0
 
+    ! do i = lx, 1, -1
+    ! do j = 1, ly
+    ! do k = 1, lz
+    !     ! downstream
+    !     alpha_down = alpha_(i, j, k)
+
+    !     ! upstream
+    !     alpha_up   = alpha_(i+1, j, k)
+
+    !     ! ray lenght lray(m) in short characteristics
+    !     lray = (x(i+1) - x(i)) / mux_1ray 
+
+    !     ! delta_optical depth 1ray & optical depth 1ray
+    !     delta_tu_1ray(i, j, k) = rte_delta_tu(alpha_down, alpha_up, lray)
+    !     tu_1ray(i, j, k) = tu_1ray(i+1, j, k) + delta_tu_1ray(i, j, k)
+        
+    !     ! xpoint in the plane of tu=1
+    !     if((1 - tu_1ray(i, j, k)) * (1 - tu_1ray(i+1, j, k)) <= 0.0) then
+    !         x_tu1(j, k) = i
+    !     endif
+    ! enddo
+    ! enddo
+    ! enddo
+    
     
     
 !!!----- intensity -----!!!
     print *, "# intensity #"
+
+
+    ! ray direction
+    call ray_def()
+
+    ! initial condision
+    ! y-z plane
+    in(1, :, :, 1) = beta(1, j, k)
+
 
     do m = 1, 1
     do idir = 2, 2
@@ -115,9 +155,9 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
         print *, "jp : ", jp
 
     do kp = kpsta(kdir), kpend(kdir), pstep(kdir)
-
         do i = 1, ncell(m)
-            !!! upstream
+            
+            ! upstream point
             iu(i) = ip + (i-1) * step(m, 1, idir)
             ju(i) = jp + (i-1) * step(m, 2, jdir)
             ku(i) = kp + (i-1) * step(m, 3, kdir)
@@ -159,7 +199,7 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
 
 
 
-            !!! downstream
+            ! downstream point
             id(i) = iu(i) + step(m, 1, idir)
             jd(i) = ju(i) + step(m, 2, jdir)
             kd(i) = ku(i) + step(m, 3, kdir)
@@ -200,7 +240,7 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
             beta_down = exp(log_beta_down)
 
 
-            !!! ray lenght lray(m) in short characteristics
+            ! ray lenght lray(m) in short characteristics
             lray = 0.d0
             if(m == 1) then
                 lray = lr(m) * (x(i) - x(i-1))
@@ -214,13 +254,24 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
             endif
 
 
-            !!! delta optical depth & delta intensity
+            ! delta optical depth & delta intensity
             delta_tu(ip, jp, kp, i) = rte_delta_tu(alpha_down, alpha_up, lray)
             exp_delta_tu(ip, jp, kp, i) = rte_exp(- delta_tu(ip, jp, kp, i))
+            delta_in(ip, jp, kp, i) = rte_delta_in(beta_down, beta_up, log_beta_down, log_beta_up, delta_tu(ip, jp, kp, i))
+
+
+
+            ! intensity
+            in_up = in(ip, jp, kp, i)
+            in(ip, jp, kp, i+1) = in_up * exp_delta_tu(ip, jp, kp, i) + delta_in(ip, jp, kp, i)
+
+            print *, "i, in : ", i, in(ip, jp, kp, i+1)
+
+            
+            ! radiative heating rate
+
 
         enddo
-
-        
 
 
 
@@ -243,6 +294,9 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, tu_1ray)
     deallocate(alpha)
     deallocate(beta)
     deallocate(delta_tu)
+    deallocate(delta_in)
+    deallocate(exp_delta_tu)
+
 
 
 contains
@@ -280,48 +334,48 @@ contains
     end function rte_delta_tu
 
 
-    ! ! delta_in
-    ! real(8) function rte_delta_in(beta_down, beta_up, log_beta_down, log_beta_up, delta_tu) result(delta_in)
-    !     use test_lc_def
-    !     implicit none
-    !     real(KIND(0.d0)), intent(in) :: beta_down, beta_up
-    !     real(KIND(0.d0)), intent(in) :: log_beta_down, log_beta_up
-    !     real(KIND(0.d0)), intent(in) :: delta_tu
+    ! delta_in
+    real(8) function rte_delta_in(beta_down, beta_up, log_beta_down, log_beta_up, delta_tu) result(delta_in)
+        use test_lc_def
+        implicit none
+        real(KIND(0.d0)), intent(in) :: beta_down, beta_up
+        real(KIND(0.d0)), intent(in) :: log_beta_down, log_beta_up
+        real(KIND(0.d0)), intent(in) :: delta_tu
 
-    !     real(KIND(0.d0)) :: exp_delta_tu
-    !     real(KIND(0.d0)) :: beta_upt
-    !     real(KIND(0.d0)) :: beta_du, beta_dum
-    !     real(KIND(0.d0)) :: log_beta_du_delta_tu, log_beta_du_delta_tu0, log_beta_du_delta_tu1
-    !     real(KIND(0.d0)) :: beta_du15, beta_du15m
-    !     real(KIND(0.d0)) :: delta_in0, delta_in1
-    !     real(KIND(0.d0)) :: tmp
+        real(KIND(0.d0)) :: exp_delta_tu
+        real(KIND(0.d0)) :: beta_upt
+        real(KIND(0.d0)) :: beta_du, beta_dum
+        real(KIND(0.d0)) :: log_beta_du_delta_tu, log_beta_du_delta_tu0, log_beta_du_delta_tu1
+        real(KIND(0.d0)) :: beta_du15, beta_du15m
+        real(KIND(0.d0)) :: delta_in0, delta_in1
+        real(KIND(0.d0)) :: tmp
 
-    ! !----------------------------------------------------------------------------------------| 
+    !----------------------------------------------------------------------------------------| 
         
-    !     exp_delta_tu = rte_exp(- delta_tu)
+        exp_delta_tu = rte_exp(- delta_tu)
 
-    !     beta_upt = beta_up * exp_delta_tu
+        beta_upt = beta_up * exp_delta_tu
 
-    !     beta_du = beta_upt / beta_down - 1.d0
-    !     beta_dum = sign(1.d0, beta_du) * max(abs(beta_du), epc) 
+        beta_du = beta_upt / beta_down - 1.d0
+        beta_dum = sign(1.d0, beta_du) * max(abs(beta_du), epc) 
 
-    !     beta_du15 = 1.d0 - 0.5d0 * beta_du
-    !     ! for zero divide
-    !     beta_du15m = sign(1.d0, beta_du15) * max(abs(beta_du15), epc) 
+        beta_du15 = 1.d0 - 0.5d0 * beta_du
+        ! for zero divide
+        beta_du15m = sign(1.d0, beta_du15) * max(abs(beta_du15), epc) 
 
-    !     tmp = 0.5d0 + sign(0.5d0, abs(beta_du) - epc)
-    !     log_beta_du_delta_tu0 = log_beta_down - log_beta_up + delta_tu
-    !     log_beta_du_delta_tu1 = 1.d0 ! value is not important
+        tmp = 0.5d0 + sign(0.5d0, abs(beta_du) - epc)
+        log_beta_du_delta_tu0 = log_beta_down - log_beta_up + delta_tu
+        log_beta_du_delta_tu1 = 1.d0 ! value is not important
 
-    !     log_beta_du_delta_tu = log_beta_du_delta_tu0 * tmp + log_beta_du_delta_tu1 * (1.d0 - tmp)
+        log_beta_du_delta_tu = log_beta_du_delta_tu0 * tmp + log_beta_du_delta_tu1 * (1.d0 - tmp)
 
-    !     delta_in0 = (beta_down - beta_upt) / log_beta_du_delta_tu
-    !     delta_in1 = beta_down / beta_du15m
+        delta_in0 = (beta_down - beta_upt) / log_beta_du_delta_tu
+        delta_in1 = beta_down / beta_du15m
 
-    !     delta_in = (delta_in0 * tmp + delta_in1 * (1.d0 - tmp)) * delta_tu
+        delta_in = (delta_in0 * tmp + delta_in1 * (1.d0 - tmp)) * delta_tu
         
-    !     return
-    ! end function rte_delta_in
+        return
+    end function rte_delta_in
 
 
     ! exp(x)

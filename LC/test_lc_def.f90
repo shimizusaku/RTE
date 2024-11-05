@@ -21,6 +21,7 @@ module test_lc_def
     integer, dimension(2) :: pshift
     integer, dimension(2) :: pshift_s
     real(8), dimension(3, 3, 2) :: step
+    real(8), parameter :: mux_1ray = 1.d0 /sqrt(3.d0)
 
     integer, dimension(2) :: ipsta
     integer, dimension(2) :: ipend
