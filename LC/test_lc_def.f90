@@ -8,7 +8,7 @@ module test_lc_def
   
     
     ! grid
-    integer, parameter :: nx = 64, ny = 64, nz = 64
+    integer, parameter :: nx = 256, ny = 256, nz = 256
     integer, parameter :: lx = nx - 1
     integer, parameter :: ly = ny + 1, lz = nz + 1
   
@@ -47,6 +47,7 @@ module test_lc_def
     real(8), dimension(mrad) :: dxd, dyd, dzd
     integer, dimension(mrad, 2, 4) :: di, dj, dk
     real(8) :: duc1, dud1, duc2, dud2
+    real(8) :: ddc1, ddd1, ddc2, ddd2
     integer, dimension(mrad) :: di1, di2
   
   
