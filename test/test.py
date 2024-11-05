@@ -1,23 +1,32 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 
-# load
-f = np.load('/mnt/solar07a/c0287shimizu/work/data/d001/MultiRay/test_python.npz')
 
-qrad_tu1 = f['qrad_tu1_mr']
-plot = qrad_tu1[1:, 1:]
+
+d = np.load('/mnt/solar07a/c0287shimizu/data/d001/MultiRay/fortran.npz')
+
+intensity = d['intensity']
+
+inten = np.zeros(255)
+
+for k in range(255):
+    inten[k] = np.average(intensity[0, 1, 1, 1, k, :, :])
+
+##### plot #####
+print('# plot #')
+plot = inten[:]
+x = np.arange(255)
+
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.direction'] = 'in'
 
 plt.figure()
-plt.imshow(plot)
-plt.title('Qrad_1ray tu1')
+# plt.imshow(plot)
+plt.plot(plot, x)
+plt.title('ave intensity sc')
 
-ticks = np.linspace(plot.min(), plot.max(), 10)
-cbar = plt.colorbar()
-cbar.set_ticks(ticks)
-
-save_dir = '/mnt/solar07a/c0287shimizu/work/fig/d001_py/MultiRay'
-file_name = 'Qrad_tu1.png'
+save_dir = '/mnt/solar07a/c0287shimizu/fig/test'
+file_name = 'sc.png'
 file_path = os.path.join(save_dir, file_name)
 
 plt.savefig(file_path)
