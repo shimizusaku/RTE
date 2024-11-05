@@ -11,7 +11,7 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
     real(8), dimension(nx), intent(in) :: x, y, z
 
     ! output data
-    real(8), dimension(1, ly, lz, lz), intent(out) :: in
+    real(8), dimension(1, ly, lz, lx), intent(out) :: in
     ! real(8), dimension(nx, ly, lz), intent(out) :: tu_1ray
     ! integer, dimension(ly, lz), intent(out) :: x_tu1
 
@@ -139,7 +139,11 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
 
     ! initial condision
     ! y-z plane
-    in(1, :, :, 1) = beta(1, j, k)
+    do j = 1, ly
+    do k = 1, lz
+        in(1, j, k, 1) = beta(1, j, k)
+    enddo
+    enddo
 
 
     do m = 1, 1
@@ -147,136 +151,139 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
     do jdir = 2, 2
     do kdir = 2, 2
         
-    print *, "m, idir, jdir, kdir: ", m, idir, jdir, kdir
+        print *, "m, idir, jdir, kdir: ", m, idir, jdir, kdir
 
-    ip = ipsta(idir)
+        ip = ipsta(idir)
 
-    do jp = jpsta(jdir), jpend(jdir), pstep(jdir)
-        print *, "jp : ", jp
+        do jp = jpsta(jdir), jpend(jdir), pstep(jdir)
+            print *, "jp : ", jp
 
-    do kp = kpsta(kdir), kpend(kdir), pstep(kdir)
-        do i = 1, ncell(m)
-            
-            ! upstream point
-            iu(i) = ip + (i-1) * step(m, 1, idir)
-            ju(i) = jp + (i-1) * step(m, 2, jdir)
-            ku(i) = kp + (i-1) * step(m, 3, kdir)
+        do kp = kpsta(kdir), kpend(kdir), pstep(kdir)
+            do i = 1, ncell(m)
+                
+                ! upstream point
+                iu(i) = ip + (i-1) * step(m, 1, idir)
+                ju(i) = jp + (i-1) * step(m, 2, jdir)
+                ku(i) = kp + (i-1) * step(m, 3, kdir)
 
-            if((iu(i) - real(ipend(idir))) > 0 ) then
-                iu(i) = ipsta(idir) + (iu(i) - real(ipend(idir)))            
-            endif
+                ! if((iu(i) - real(ipend(idir))) > 0 ) then
+                !     iu(i) = ipsta(idir) + (iu(i) - real(ipend(idir)))            
+                ! endif
 
-            if((ju(i) - real(jpend(jdir))) > 0 ) then
-                ju(i) = jpsta(jdir) + (ju(i) - real(jpend(jdir)))            
-            endif
+                if((ju(i) - real(jpend(jdir))) > 0 ) then
+                    ju(i) = jpsta(jdir) + (ju(i) - real(jpend(jdir)))            
+                endif
 
-            if((ku(i) - real(kpend(kdir))) > 0 ) then
-                ku(i) = kpsta(kdir) + (ku(i) - real(kpend(kdir)))            
-            endif
+                if((ku(i) - real(kpend(kdir))) > 0 ) then
+                    ku(i) = kpsta(kdir) + (ku(i) - real(kpend(kdir)))            
+                endif
 
 
-            ! alpha and beta
-            duc1 = ju(i) - int(ju(i))
-            dud1 = dyy - duc1
-            duc2 = ku(i) - int(ku(i))
-            dud2 = dzz - duc2
+                ! alpha and beta
+                duc1 = ju(i) - int(ju(i))
+                dud1 = dyy - duc1
+                duc2 = ku(i) - int(ku(i))
+                dud2 = dzz - duc2
 
-            log_alpha_up = &
+                log_alpha_up = &
                 & ((log(alpha(int(iu(i))+di(m, idir, 1), int(ju(i))+dj(m, jdir, 1), int(ku(i))+dk(m, kdir, 1))) * dud1 * dud2 &
                 & + log(alpha(int(iu(i))+di(m, idir, 2), int(ju(i))+dj(m, jdir, 2), int(ku(i))+dk(m, kdir, 2))) * duc1 * dud2 &
                 & + log(alpha(int(iu(i))+di(m, idir, 3), int(ju(i))+dj(m, jdir, 3), int(ku(i))+dk(m, kdir, 3))) * dud1 * duc2 &
                 & + log(alpha(int(iu(i))+di(m, idir, 4), int(ju(i))+dj(m, jdir, 4), int(ku(i))+dk(m, kdir, 4))) * duc1 * duc2 &
-            &  ) * di1(m) * di2(m))
-            alpha_up = exp(log_alpha_up)
+                &  ) * di1(m) * di2(m))
+                alpha_up = exp(log_alpha_up)
 
-            log_beta_up = &
-            & ((log(beta(int(iu(i))+di(m, idir, 1), int(ju(i))+dj(m, jdir, 1), int(ku(i))+dk(m, kdir, 1))) * dud1 * dud2 &
-            & + log(beta(int(iu(i))+di(m, idir, 2), int(ju(i))+dj(m, jdir, 2), int(ku(i))+dk(m, kdir, 2))) * duc1 * dud2 &
-            & + log(beta(int(iu(i))+di(m, idir, 3), int(ju(i))+dj(m, jdir, 3), int(ku(i))+dk(m, kdir, 3))) * dud1 * duc2 &
-            & + log(beta(int(iu(i))+di(m, idir, 4), int(ju(i))+dj(m, jdir, 4), int(ku(i))+dk(m, kdir, 4))) * duc1 * duc2 &
-            &  ) * di1(m) * di2(m))
-            beta_up = exp(log_beta_up)
-
-
-
-            ! downstream point
-            id(i) = iu(i) + step(m, 1, idir)
-            jd(i) = ju(i) + step(m, 2, jdir)
-            kd(i) = ku(i) + step(m, 3, kdir)
-
-            if((id(i) - real(ipend(idir))) > 0 ) then
-                id(i) = ipsta(idir) + (id(i) - real(ipend(idir)))
-            endif
-
-            if((jd(i) - real(jpend(jdir))) > 0 ) then
-                jd(i) = jpsta(jdir) + (jd(i) - real(jpend(jdir)))                
-            endif
-
-            if((kd(i) - real(kpend(kdir))) > 0 ) then
-                kd(i) = kpsta(kdir) + (kd(i) - real(kpend(kdir)))                
-            endif
+                log_beta_up = &
+                & ((log(beta(int(iu(i))+di(m, idir, 1), int(ju(i))+dj(m, jdir, 1), int(ku(i))+dk(m, kdir, 1))) * dud1 * dud2 &
+                & + log(beta(int(iu(i))+di(m, idir, 2), int(ju(i))+dj(m, jdir, 2), int(ku(i))+dk(m, kdir, 2))) * duc1 * dud2 &
+                & + log(beta(int(iu(i))+di(m, idir, 3), int(ju(i))+dj(m, jdir, 3), int(ku(i))+dk(m, kdir, 3))) * dud1 * duc2 &
+                & + log(beta(int(iu(i))+di(m, idir, 4), int(ju(i))+dj(m, jdir, 4), int(ku(i))+dk(m, kdir, 4))) * duc1 * duc2 &
+                &  ) * di1(m) * di2(m))
+                beta_up = exp(log_beta_up)
 
 
-            ! alpha and beta
-            ddc1 = jd(i) - int(jd(i))
-            ddd1 = dyy - ddc1
-            ddc2 = kd(i) - int(kd(i))
-            ddd2 = dzz - ddc2
 
-            log_alpha_down = &
+                ! downstream point
+                id(i) = iu(i) + step(m, 1, idir)
+                jd(i) = ju(i) + step(m, 2, jdir)
+                kd(i) = ku(i) + step(m, 3, kdir)
+
+                ! if((id(i) - real(ipend(idir))) > 0 ) then
+                !     id(i) = ipsta(idir) + (id(i) - real(ipend(idir)))
+                ! endif
+
+                if((jd(i) - real(jpend(jdir))) > 0 ) then
+                    jd(i) = jpsta(jdir) + (jd(i) - real(jpend(jdir)))                
+                endif
+
+                if((kd(i) - real(kpend(kdir))) > 0 ) then
+                    kd(i) = kpsta(kdir) + (kd(i) - real(kpend(kdir)))                
+                endif
+
+                ! print *, "iu, id : ", iu(i), id(i)
+
+                ! alpha and beta
+                ddc1 = jd(i) - int(jd(i))
+                ddd1 = dyy - ddc1
+                ddc2 = kd(i) - int(kd(i))
+                ddd2 = dzz - ddc2
+
+                log_alpha_down = &
                 & ((log(alpha(int(id(i))+di(m, idir, 1), int(jd(i))+dj(m, jdir, 1), int(kd(i))+dk(m, kdir, 1))) * ddd1 * ddd2 &
                 & + log(alpha(int(id(i))+di(m, idir, 2), int(jd(i))+dj(m, jdir, 2), int(kd(i))+dk(m, kdir, 2))) * ddc1 * ddd2 &
                 & + log(alpha(int(id(i))+di(m, idir, 3), int(jd(i))+dj(m, jdir, 3), int(kd(i))+dk(m, kdir, 3))) * ddd1 * ddc2 &
                 & + log(alpha(int(id(i))+di(m, idir, 4), int(jd(i))+dj(m, jdir, 4), int(kd(i))+dk(m, kdir, 4))) * ddc1 * ddc2 &
-            &  ) * di1(m) * di2(m))
-            alpha_down = exp(log_alpha_down)
-            
-            log_beta_down = &
-            & ((log(beta(int(id(i))+di(m, idir, 1), int(jd(i))+dj(m, jdir, 1), int(kd(i))+dk(m, kdir, 1))) * ddd1 * ddd2 &
-            & + log(beta(int(id(i))+di(m, idir, 2), int(jd(i))+dj(m, jdir, 2), int(kd(i))+dk(m, kdir, 2))) * ddc1 * ddd2 &
-            & + log(beta(int(id(i))+di(m, idir, 3), int(jd(i))+dj(m, jdir, 3), int(kd(i))+dk(m, kdir, 3))) * ddd1 * ddc2 &
-            & + log(beta(int(id(i))+di(m, idir, 4), int(jd(i))+dj(m, jdir, 4), int(kd(i))+dk(m, kdir, 4))) * ddc1 * ddc2 &
-            &  ) * di1(m) * di2(m))
-            beta_down = exp(log_beta_down)
+                &  ) * di1(m) * di2(m))
+                alpha_down = exp(log_alpha_down)
+                
+                log_beta_down = &
+                & ((log(beta(int(id(i))+di(m, idir, 1), int(jd(i))+dj(m, jdir, 1), int(kd(i))+dk(m, kdir, 1))) * ddd1 * ddd2 &
+                & + log(beta(int(id(i))+di(m, idir, 2), int(jd(i))+dj(m, jdir, 2), int(kd(i))+dk(m, kdir, 2))) * ddc1 * ddd2 &
+                & + log(beta(int(id(i))+di(m, idir, 3), int(jd(i))+dj(m, jdir, 3), int(kd(i))+dk(m, kdir, 3))) * ddd1 * ddc2 &
+                & + log(beta(int(id(i))+di(m, idir, 4), int(jd(i))+dj(m, jdir, 4), int(kd(i))+dk(m, kdir, 4))) * ddc1 * ddc2 &
+                &  ) * di1(m) * di2(m))
+                beta_down = exp(log_beta_down)
 
 
-            ! ray lenght lray(m) in short characteristics
-            lray = 0.d0
-            if(m == 1) then
-                lray = lr(m) * (x(i) - x(i-1))
+                ! ray lenght lray(m) in short characteristics
+                lray = 0.d0
+                if(m == 1) then
+                    lray = lr(m) * (x(i) - x(i-1))
 
-            elseif(m == 2) then
-                lray = lr(m) * (y(i) - y(i-1))
-            
-            elseif(m == 3) then
-                lray = lr(m) * (z(i) - z(i-1))
-            
-            endif
-
-
-            ! delta optical depth & delta intensity
-            delta_tu(ip, jp, kp, i) = rte_delta_tu(alpha_down, alpha_up, lray)
-            exp_delta_tu(ip, jp, kp, i) = rte_exp(- delta_tu(ip, jp, kp, i))
-            delta_in(ip, jp, kp, i) = rte_delta_in(beta_down, beta_up, log_beta_down, log_beta_up, delta_tu(ip, jp, kp, i))
+                elseif(m == 2) then
+                    lray = lr(m) * (y(i) - y(i-1))
+                
+                elseif(m == 3) then
+                    lray = lr(m) * (z(i) - z(i-1))
+                
+                endif
 
 
+                ! delta optical depth & delta intensity
+                delta_tu(ip, jp, kp, i) = rte_delta_tu(alpha_down, alpha_up, lray)
+                exp_delta_tu(ip, jp, kp, i) = rte_exp(- delta_tu(ip, jp, kp, i))
+                delta_in(ip, jp, kp, i) = rte_delta_in(beta_down, beta_up, log_beta_down, log_beta_up, delta_tu(ip, jp, kp, i))
 
-            ! intensity
-            in_up = in(ip, jp, kp, i)
-            in(ip, jp, kp, i+1) = in_up * exp_delta_tu(ip, jp, kp, i) + delta_in(ip, jp, kp, i)
+                ! print *, "delta_in : ", jp, kp, i, delta_in(ip, jp, kp, i)
 
-            print *, "i, in : ", i, in(ip, jp, kp, i+1)
 
-            
-            ! radiative heating rate
+
+                ! intensity
+                in_up = in(ip, jp, kp, i)
+                in(ip, jp, kp, i+1) = in_up * exp_delta_tu(ip, jp, kp, i) + delta_in(ip, jp, kp, i)
+
+                ! print *, "i, in : ", i, in(ip, jp, kp, i+1)
+
+                
+                ! ! radiative heating rate
+
+
+            enddo
+
 
 
         enddo
-
-
-
-    enddo
-    enddo
+        enddo
 
     enddo
     enddo

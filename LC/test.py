@@ -39,22 +39,27 @@ intensity = test_lc.rte_longcharacteristic(ro, te, op, x, y, z)
 print('# save data #')
 np.savez('/mnt/solar07a/c0287shimizu/data/d001/LC/test.npz', intensity=intensity)
 
-# ##### plot #####
-# print('# plot #')
-# plot = tu_1ray[1, 100, 100, :]
-# x = np.arange(257)
+inten = np.zeros(255)
 
-# plt.rcParams['xtick.direction'] = 'in'
-# plt.rcParams['ytick.direction'] = 'in'
+for k in range(255):
+    inten[k] = np.average(intensity[0, :, :, k])
 
-# plt.figure()
-# # plt.imshow(plot)
-# plt.plot(plot, x)
-# plt.title('tu_1ray')
+##### plot #####
+print('# plot #')
+plot = inten[:]
+x = np.arange(255)
 
-# save_dir = '/mnt/solar07a/c0287shimizu/work/LC/fig'
-# file_name = 'tu_1ray.png'
-# file_path = os.path.join(save_dir, file_name)
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.direction'] = 'in'
 
-# plt.savefig(file_path)
-# plt.close()
+plt.figure()
+# plt.imshow(plot)
+plt.plot(plot, x)
+plt.title('ave intensity lc')
+
+save_dir = '/mnt/solar07a/c0287shimizu/fig/test'
+file_name = 'lc.png'
+file_path = os.path.join(save_dir, file_name)
+
+plt.savefig(file_path)
+plt.close()

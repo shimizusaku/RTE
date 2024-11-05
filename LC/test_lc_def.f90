@@ -66,13 +66,23 @@ module test_lc_def
       kpsta = [lz-1, 1]
       kpend = [1, lz-1]
 
-      ncell = [lx, ly, lz]
+      ncell = [lx-1, ly-1, lz-1]
   
       ! short characteristics
       mux = [sqrt(7.d0 / 9.d0), 1.d0 / 3.d0,       1.d0 / 3.d0       ]
       muy = [1.0d0 / 3.0d0,     sqrt(7.d0 / 9.d0), 1.d0 / 3.d0       ]
       muz = [1.d0 / 3.d0,       1.d0 / 3.d0,       sqrt(7.d0 / 9.d0) ]
       omr = [1.d0 / 24.d0,      1.d0 / 24.d0,      1.d0 / 24.d0      ]
+
+      do m = 1, mrad
+        lr(m) = min(dxx / mux(m), dyy / muy(m), dzz / muz(m))
+        
+        dxc(m) = mux(m) * lr(m)
+        dyc(m) = muy(m) * lr(m)
+        dzc(m) = muz(m) * lr(m)
+
+      enddo
+
   
       do m = 1, mrad
         lr(m) = min(dxx / mux(m), dyy / muy(m), dzz / muz(m))
