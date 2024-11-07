@@ -59,12 +59,12 @@ module test_lc_def
       pstep = [-1, 1]
       pshift = [-1, 0]
       pshift_s = [0, -1]
-      ipsta = [lx-1, 1]
-      ipend = [1, lx-1]
-      jpsta = [ly-1, 1]
-      jpend = [1, ly-1]
-      kpsta = [lz-1, 1]
-      kpend = [1, lz-1]
+      ipsta = [lx, 1]
+      ipend = [1, lx]
+      jpsta = [ly, 1]
+      jpend = [1, ly]
+      kpsta = [lz, 1]
+      kpend = [1, lz]
 
       ncell = [lx-1, ly-1, lz-1]
   

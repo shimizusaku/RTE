@@ -1,4 +1,4 @@
-subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
+subroutine rte_longcharacteristic(ro, te, op, x, y, z, in, in_p)
 !!!----- def & init ----- !!!
     ! rte multiray def
     use test_lc_def
@@ -14,6 +14,7 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
     real(8), dimension(1, ly, lz, lx), intent(out) :: in
     ! real(8), dimension(nx, ly, lz), intent(out) :: tu_1ray
     ! integer, dimension(ly, lz), intent(out) :: x_tu1
+    real(8), dimension(lx, ly, lz), intent(out) :: in_p
 
     ! ray 
     real(8), dimension(ly-1) :: iu, ju, ku
@@ -39,6 +40,8 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
 
     ! intensity
     real(8) :: in_up
+    real(8), allocatable :: a(:, :, :), b(:, :, :), c(:, :, :), d(:, :, :)
+    
 
 
 
@@ -52,6 +55,10 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
     allocate(delta_tu(1, ly, lz, lz))
     allocate(delta_in(1, ly, lz, lz))
     allocate(exp_delta_tu(1, ly, lz, lz))
+    allocate(a(ly, lz, lx))
+    allocate(b(ly, lz, lx))
+    allocate(c(ly, lz, lx))
+    allocate(d(ly, lz, lx))
 
 
 !-------------------------------------------------------------------------------------------------------!
@@ -157,6 +164,8 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
 
         do jp = jpsta(jdir), jpend(jdir), pstep(jdir)
             print *, "jp : ", jp
+            !
+            !
 
         do kp = kpsta(kdir), kpend(kdir), pstep(kdir)
             do i = 1, ncell(m)
@@ -166,9 +175,9 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
                 ju(i) = jp + (i-1) * step(m, 2, jdir)
                 ku(i) = kp + (i-1) * step(m, 3, kdir)
 
-                ! if((iu(i) - real(ipend(idir))) > 0 ) then
-                !     iu(i) = ipsta(idir) + (iu(i) - real(ipend(idir)))            
-                ! endif
+                if((iu(i) - real(ipend(idir))) > 0 ) then
+                    iu(i) = ipsta(idir) + (iu(i) - real(ipend(idir)))            
+                endif
 
                 if((ju(i) - real(jpend(jdir))) > 0 ) then
                     ju(i) = jpsta(jdir) + (ju(i) - real(jpend(jdir)))            
@@ -178,12 +187,17 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
                     ku(i) = kpsta(kdir) + (ku(i) - real(kpend(kdir)))            
                 endif
 
+                ! print *, "iu, ju, ku:", iu(i), ju(i), ku(i)
 
                 ! alpha and beta
                 duc1 = ju(i) - int(ju(i))
                 dud1 = dyy - duc1
                 duc2 = ku(i) - int(ku(i))
                 dud2 = dzz - duc2
+
+
+
+                
 
                 log_alpha_up = &
                 & ((log(alpha(int(iu(i))+di(m, idir, 1), int(ju(i))+dj(m, jdir, 1), int(ku(i))+dk(m, kdir, 1))) * dud1 * dud2 &
@@ -193,6 +207,7 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
                 &  ) * di1(m) * di2(m))
                 alpha_up = exp(log_alpha_up)
 
+                
                 log_beta_up = &
                 & ((log(beta(int(iu(i))+di(m, idir, 1), int(ju(i))+dj(m, jdir, 1), int(ku(i))+dk(m, kdir, 1))) * dud1 * dud2 &
                 & + log(beta(int(iu(i))+di(m, idir, 2), int(ju(i))+dj(m, jdir, 2), int(ku(i))+dk(m, kdir, 2))) * duc1 * dud2 &
@@ -201,6 +216,12 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
                 &  ) * di1(m) * di2(m))
                 beta_up = exp(log_beta_up)
 
+                if(i == 1) then
+                    alpha_up = alpha(ip, jp, kp)
+                    beta_up = beta(ip, jp, kp)
+                    log_beta_up = log(beta_up)
+                endif
+
 
 
                 ! downstream point
@@ -208,9 +229,9 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
                 jd(i) = ju(i) + step(m, 2, jdir)
                 kd(i) = ku(i) + step(m, 3, kdir)
 
-                ! if((id(i) - real(ipend(idir))) > 0 ) then
-                !     id(i) = ipsta(idir) + (id(i) - real(ipend(idir)))
-                ! endif
+                if((id(i) - real(ipend(idir))) > 0 ) then
+                    id(i) = ipsta(idir) + (id(i) - real(ipend(idir)))
+                endif
 
                 if((jd(i) - real(jpend(jdir))) > 0 ) then
                     jd(i) = jpsta(jdir) + (jd(i) - real(jpend(jdir)))                
@@ -220,13 +241,20 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
                     kd(i) = kpsta(kdir) + (kd(i) - real(kpend(kdir)))                
                 endif
 
-                ! print *, "iu, id : ", iu(i), id(i)
+                ! print *, "iu, id : ", jd(i), kd(i)
 
                 ! alpha and beta
                 ddc1 = jd(i) - int(jd(i))
                 ddd1 = dyy - ddc1
                 ddc2 = kd(i) - int(kd(i))
                 ddd2 = dzz - ddc2
+
+                a(jp, kp, i) = ddc1
+                b(jp, kp, i) = ddd1
+                c(jp, kp, i) = ddc2
+                d(jp, kp, i) = ddd2
+
+
 
                 log_alpha_down = &
                 & ((log(alpha(int(id(i))+di(m, idir, 1), int(jd(i))+dj(m, jdir, 1), int(kd(i))+dk(m, kdir, 1))) * ddd1 * ddd2 &
@@ -285,6 +313,60 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
         enddo
         enddo
 
+        do jp = 1, ly
+        do kp = 1, lz
+            in_p(1, jp, kp) = in(ip, jp, kp, 1)
+        enddo
+        enddo
+
+        do jp = 2, ly
+        do kp = 2, lz
+            
+            do i = 1, lx-1
+                in_p(i+1, jp, kp) = & 
+                & (((in(ip, jp-1, kp-1, i+1)) * a(jp-1, kp-1, i) * c(jp-1, kp-1, i) &
+                & + (in(ip, jp,   kp-1, i+1)) * b(jp,   kp-1, i) * c(jp,   kp-1, i) &
+                & + (in(ip, jp-1, kp,   i+1)) * a(jp-1, kp,   i) * d(jp-1, kp,   i) &
+                & + (in(ip, jp,   kp,   i+1)) * b(jp,   kp,   i) * d(jp,   kp,   i) &
+                &   ) * di1(m) * di2(m))
+                
+
+            enddo
+        enddo
+        enddo
+
+        do jp = 1, ly
+        do kp = 1, lz
+            do i = 1, lx-1
+
+            if(jp==1) then
+                in_p(i+1, jp, kp) = & 
+                & (((in(ip, ly, kp-1, i+1)) * a(ly, kp-1, i) * c(ly, kp-1, i) &
+                & + (in(ip, jp, kp-1, i+1)) * b(jp, kp-1, i) * c(jp, kp-1, i) &
+                & + (in(ip, ly, kp,   i+1)) * a(ly, kp,   i) * d(ly, kp,   i) &
+                & + (in(ip, jp, kp,   i+1)) * b(jp, kp,   i) * d(jp, kp,   i) &
+                &   ) * di1(m) * di2(m))
+            elseif(kp==1) then
+                in_p(i+1, jp, kp) = & 
+                & (((in(ip, jp-1, lz, i+1)) * a(jp-1, lz, i) * c(jp-1, lz, i) &
+                & + (in(ip, jp,   lz, i+1)) * b(jp,   lz, i) * c(jp,   lz, i) &
+                & + (in(ip, jp-1, kp, i+1)) * a(jp-1, kp, i) * d(jp-1, kp, i) &
+                & + (in(ip, jp,   kp, i+1)) * b(jp,   kp, i) * d(jp,   kp, i) &
+                &   ) * di1(m) * di2(m))
+            elseif(jp==1 .and. jp==1) then
+                in_p(i+1, jp, kp) = & 
+                & (((in(ip, ly, lz, i+1)) * a(ly, lz, i) * c(ly, lz, i) &
+                & + (in(ip, jp, lz, i+1)) * b(jp, lz, i) * c(jp, lz, i) &
+                & + (in(ip, ly, kp, i+1)) * a(ly, kp, i) * d(ly, kp, i) &
+                & + (in(ip, jp, kp, i+1)) * b(jp, kp, i) * d(jp, kp, i) &
+                &   ) * di1(m) * di2(m))
+            endif
+
+            enddo
+        enddo
+        enddo
+
+
     enddo
     enddo
     enddo
@@ -303,6 +385,10 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in)
     deallocate(delta_tu)
     deallocate(delta_in)
     deallocate(exp_delta_tu)
+    deallocate(a)
+    deallocate(b)
+    deallocate(c)
+    deallocate(d)
 
 
 
