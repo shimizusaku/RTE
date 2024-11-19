@@ -106,7 +106,7 @@ subroutine rte_longcharacteristic(ro, te, op, x, y, z, in, in_p)
 
 
 !!!----- optical depth 1ray -----!!!
-    print *, "# optical depth 1ray #"
+    ! print *, "# optical depth 1ray #"
 
     ! ! optical depth 1ray
     ! tu_1ray(lx+1, :, :) = 0.0
